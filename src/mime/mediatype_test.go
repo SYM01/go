@@ -140,6 +140,18 @@ func TestParseMediaType(t *testing.T) {
 			"application/x-stuff",
 			m("title", "This is even more ***fun*** isn't it!")},
 
+		// Security issue from https://github.com/golang/go/issues/47602
+		{`multipart/form-data; boundary="boundary";` +
+			`boundary*0="another";boundary*1="-boundary"`,
+			"",
+			m(),
+		},
+		{`multipart/form-data; boundary="boundary";` +
+			`boundary*="another-boundary"`,
+			"",
+			m(),
+		},
+
 		// Tests from http://greenbytes.de/tech/tc2231/
 		// Note: Backslash escape handling is a bit loose, like MSIE.
 
@@ -369,13 +381,17 @@ func TestParseMediaType(t *testing.T) {
 			"attachment",
 			m("filename", "foobar")},
 		// #attfnboth
+		// Note: This testcase is different from http://test.greenbytes.de/tech/tc2231/#attfnboth.
+		// It's now rejected due to the security issue mentioned in https://github.com/golang/go/issues/47602
 		{`attachment; filename="foo-ae.html"; filename*=UTF-8''foo-%c3%a4.html`,
-			"attachment",
-			m("filename", "foo-ä.html")},
+			"",
+			m()},
 		// #attfnboth2
+		// Note: This testcase is different from http://test.greenbytes.de/tech/tc2231/#attfnboth2.
+		// It's now rejected due to the security issue mentioned in https://github.com/golang/go/issues/47602
 		{`attachment; filename*=UTF-8''foo-%c3%a4.html; filename="foo-ae.html"`,
-			"attachment",
-			m("filename", "foo-ä.html")},
+			"",
+			m()},
 		// #attfnboth3
 		{`attachment; filename*0*=ISO-8859-15''euro-sign%3d%a4; filename*=ISO-8859-1''currency-sign%3d%a4`,
 			"attachment",

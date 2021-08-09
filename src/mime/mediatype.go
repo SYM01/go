@@ -197,6 +197,11 @@ func ParseMediaType(v string) (mediatype string, params map[string]string, err e
 	// (i.e. RFC 2231 things with stars: "foo*0" or "foo*")
 	var buf strings.Builder
 	for key, pieceMap := range continuation {
+		if _, exists := params[key]; exists {
+			// Duplicate parameter name is bogus.
+			return "", nil, errors.New("mime: duplicate parameter name")
+		}
+
 		singlePartKey := key + "*"
 		if v, ok := pieceMap[singlePartKey]; ok {
 			if decv, ok := decode2231Enc(v); ok {
